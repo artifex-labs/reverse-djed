@@ -15,8 +15,7 @@ export const Header = () => {
   const { wallet, wallets, connect, detectWallets } = useWallet()
   const { data: address } = useQuery({ queryKey: ['address'], queryFn: () => wallet?.address() ?? '' })
   const [menuOpen, setMenuOpen] = useState(false)
-  const [isScrolled, setIsScrolled] = useState(false);
-
+  const [isScrolled, setIsScrolled] = useState(false)
 
   // Navigation links data
   const navLinks = [
@@ -56,21 +55,22 @@ export const Header = () => {
     }
   }, [])
 
-
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 0);
-    };
-    
-    window.addEventListener('scroll', handleScroll);
-    
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+      setIsScrolled(window.scrollY > 0)
+    }
+
+    window.addEventListener('scroll', handleScroll)
+
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   return (
     <>
       {/* Navbar */}
-      <header className={`sticky top-0 left-0 right-0 py-4 px-8 bg-white/10 dark:bg-dark-bg/10 shadow-sm dark:shadow-primary/30 z-50 transition-all duration-200 ease-in-out ${isScrolled && 'bg-white/95 dark:bg-dark-bg/95 inset-shadow-lg'}`}>
+      <header
+        className={`sticky top-0 left-0 right-0 py-4 px-8 bg-white/10 dark:bg-dark-bg/10 shadow-sm dark:shadow-primary/30 z-50 transition-all duration-200 ease-in-out ${isScrolled && 'bg-white/95 dark:bg-dark-bg/95 inset-shadow-lg'}`}
+      >
         <nav className="flex items-center justify-between">
           {/* Logo */}
           <div className="flex-1">
