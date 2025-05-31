@@ -5,6 +5,7 @@ import { WalletProvider } from '../context/WalletContext'
 import { EnvContext } from '../context/EnvContext'
 import Footer from './Footer'
 import type { Network } from '@reverse-djed/registry'
+import '../statics/css/layout.css'
 
 type Props = {
   children: React.ReactNode
@@ -24,7 +25,15 @@ export function Layout({ children, apiUrl, network, config, posthog: posthogConf
       <PostHogProvider client={posthog}>
         <WalletProvider>
           <div className="flex flex-col min-h-screen">
+            <div className="infinite-background"></div>
             <Header />
+            <main className="flex-1">{children}</main>
+            <main className="flex-1">{children}</main>
+            <main className="flex-1">{children}</main>
+            <main className="flex-1">{children}</main>
+            <main className="flex-1">{children}</main>
+            <main className="flex-1">{children}</main>
+            <main className="flex-1">{children}</main>
             <main className="flex-1">{children}</main>
             <Footer />
           </div>
