@@ -1,6 +1,6 @@
 const Footer = () => {
   return (
-    <footer className="flex flex-col md:flex-row gap-8 p-8 justify-between bg-white dark:bg-dark-bg border-t border-light-foreground dark:border-primary/30 w-full text-center max-h-fit">
+    <footer className="flex flex-col md:flex-row gap-8 p-8 justify-between bg-light-footer dark:bg-dark-footer border-t border-light-foreground dark:border-primary/30 w-full text-center max-h-fit transition-all duration-200 ease-in-out">
       <div className="flex flex-col md:flex-row gap-6 items-center">
         <img src="/artifex-logo.png" alt="Artifex Labs Logo" className="w-[50px]" />
         <p className="pt-1">All rights reserved © 2025</p>
@@ -41,9 +41,7 @@ const Footer = () => {
 
         <div className="tooltip">
           <div className="tooltip-content">
-            <div className="bg-white dark:bg-black rounded-lg p-2 opacity-95">
-              Look at reverse djed source code
-            </div>
+            <div className="bg-white dark:bg-black rounded-lg p-2 opacity-95">Look at source code</div>
           </div>
           <a
             href="https://github.com/artifex-labs/reverse-djed"

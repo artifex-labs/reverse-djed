@@ -1,20 +1,23 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink } from 'react-router'
 import Button from '~/components/Button'
-import Modal from '~/components/Modal'
 import Select from '~/components/Select'
 import { useEnv } from '~/context/EnvContext'
 import { useWallet } from '~/context/WalletContext'
 import { ThemeToggle } from './ThemeToggle'
-import { FiMenu, FiX } from 'react-icons/fi'
-import { useQuery } from '@tanstack/react-query'
+import { FiEye, FiEyeOff, FiMenu, FiX } from 'react-icons/fi'
+import Sidebar from './Sidebar'
+import { useLocalStorage } from 'usehooks-ts'
+import { DEFAULT_SHOW_BALANCE } from '~/utils'
+
+const SUPPORTED_WALLET_IDS = ['eternl', 'lace', 'vespr', 'begin', 'gerowallet']
 
 export const Header = () => {
-  const [isOpen, setOpen] = useState(false)
+  const [isWalletSidebarOpen, setIsWalletSidebarOpen] = useState(false)
   const { network, config } = useEnv()
-  const { wallet, wallets, connect, detectWallets } = useWallet()
-  const { data: address } = useQuery({ queryKey: ['address'], queryFn: () => wallet?.address() ?? '' })
+  const { wallet, wallets, connect, detectWallets, disconnect } = useWallet()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [showBalance, setShowBalance] = useLocalStorage<boolean | null>('showBalance', DEFAULT_SHOW_BALANCE)
 
   // Navigation links data
   const navLinks = [
@@ -32,8 +35,8 @@ export const Header = () => {
   }
 
   useEffect(() => {
-    if (isOpen) detectWallets()
-  }, [isOpen])
+    if (isWalletSidebarOpen && !wallet) detectWallets()
+  }, [isWalletSidebarOpen])
 
   const toggleMenu = () => setMenuOpen((prev) => !prev)
 
@@ -57,20 +60,20 @@ export const Header = () => {
   return (
     <>
       {/* Navbar */}
-      <header className="top-0 left-0 right-0 py-4 px-8 bg-white dark:bg-dark-bg shadow-sm dark:shadow-primary/30 z-50 ">
+      <header className="sticky top-0 left-0 right-0 py-4 px-8 bg-light-navbar dark:bg-dark-navbar shadow-sm dark:shadow-primary/30 z-50 transition-all duration-200 ease-in-out">
         <nav className="flex items-center justify-between">
           {/* Logo */}
           <div className="flex-1">
             <Link to="/">
               <div className="flex flex-row text-xl items-center">
-                <img src="/reverse-djed.svg" alt="Reverse DJED" />
-                Яeverse DJED
+                <img src="/djed.svg" alt="Open DJED" />
+                Open DJED
               </div>
             </Link>
           </div>
 
           {/* Center links - Desktop only */}
-          <div className="hidden lg:flex justify-center space-x-6">
+          <div className="hidden lg:flex justify-center space-x-6 mx-10">
             {navLinks.map((link) => (
               <NavLink key={link.to} to={link.to} className={getNavLinkClasses}>
                 {link.label}
@@ -92,12 +95,12 @@ export const Header = () => {
               }))}
             />
             <ThemeToggle />
-            <Button onClick={() => setOpen(true)} className="w-48">
+            <Button onClick={() => setIsWalletSidebarOpen(true)} className="w-48">
               {wallet
                 ? wallet.balance.handle
                   ? `$${wallet.balance.handle}`
-                  : address
-                    ? `${address.slice(0, 10)}...`
+                  : wallet.address
+                    ? `${wallet.address.slice(0, 10)}...`
                     : 'Loading address...'
                 : 'Connect wallet'}
             </Button>
@@ -152,12 +155,12 @@ export const Header = () => {
           </div>
           {/* Bottom content */}
           <div className="px-6 py-4">
-            <Button onClick={() => setOpen(true)} className="w-full">
+            <Button onClick={() => setIsWalletSidebarOpen(true)} className="w-full">
               {wallet
                 ? wallet.balance.handle
                   ? `$${wallet.balance.handle}`
-                  : address
-                    ? `${address.slice(0, 10)}...`
+                  : wallet.address
+                    ? `${wallet.address.slice(0, 10)}...`
                     : 'Loading address...'
                 : 'Connect wallet'}
             </Button>
@@ -168,25 +171,119 @@ export const Header = () => {
       {/* Dark background*/}
       {menuOpen && <div className="fixed inset-0 bg-dark-bg/80 z-30" onClick={toggleMenu} />}
 
-      {/* Wallet Modal */}
-      <Modal isOpen={isOpen} onClose={() => setOpen(false)} title="Select Wallet">
-        <div className="space-y-4">
-          <div>{wallets.length === 0 && <p className="font-semibold">No wallets detected.</p>}</div>
-          {wallets.map(({ id, name, icon }) => (
-            <div
-              className="flex flex-row gap-2 items-center justify-start p-4 rounded-lg hover:bg-primary"
-              key={id}
-              onClick={() => {
-                connect(id)
-                setOpen(false)
-              }}
-            >
-              <img src={icon} alt={`${name} icon`} className="w-8 h-8 mr-3" />
-              <span>{name.replace(/^\w/, (c) => c.toUpperCase())}</span>
+      {/* Wallet Sidebar */}
+      <Sidebar isOpen={isWalletSidebarOpen} onClose={() => setIsWalletSidebarOpen(false)}>
+        {wallet ? (
+          <div className="flex flex-col justify-start h-full px-4 py-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex flex-col gap-6">
+              <div className="flex flex-col justify-start items-start gap-4 w-full border-b border-gray-300 pb-6">
+                <h1 className="font-bold">Wallet Details:</h1>
+                <div className="flex flex-row justify-center items-center gap-6 w-full">
+                  <span className="rounded-full w-10 h-10 overflow-hidden">
+                    <img src={wallet.icon} alt="Wallet Icon" className="w-full h-full object-cover" />
+                  </span>
+                  <p>{wallet.address?.slice(0, 20)}...</p>
+                  <div className="tooltip tooltip-left">
+                    <div className="tooltip-content">
+                      <div className="bg-white dark:bg-black rounded-lg p-2 opacity-95">
+                        Disconnect your wallet.
+                      </div>
+                    </div>
+                    <span className="cursor-pointer" onClick={disconnect}>
+                      <i className="fa-solid fa-plug-circle-xmark w-full"></i>
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div
+                className="flex flex-col justify-start items-start gap-4 w-full pb-6"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex flex-row justify-between w-full">
+                  <h1 className="font-bold">Available Balance:</h1>
+                  <div className="tooltip tooltip-left">
+                    <div className="tooltip-content">
+                      <div className="bg-white dark:bg-black rounded-lg p-2 opacity-95">
+                        {showBalance ? 'Hide' : 'Show'} your current balance
+                      </div>
+                    </div>
+                    <span className="cursor-pointer" onClick={() => setShowBalance(!showBalance)}>
+                      {showBalance ? <FiEyeOff /> : <FiEye />}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex flex-row justify-between items-center gap-6 w-full font-bold">
+                  <span className="rounded-full w-10 h-10 overflow-hidden">
+                    <img src="/cardano-ada-logo.svg" alt="ADA logo" />
+                  </span>
+                  <p>
+                    {showBalance ? (
+                      <span className="mr-4">{wallet.balance.ADA}</span>
+                    ) : (
+                      <span className="inline-block w-32 h-4 bg-gray-300 rounded-md blur-sm mr-4" />
+                    )}
+                    ADA
+                  </p>
+                </div>
+                <div className="flex flex-row justify-between items-center gap-6 w-full font-bold">
+                  <span className="rounded-full w-10 h-10 overflow-hidden">
+                    <img src="/djed.svg" alt="Djed logo" />
+                  </span>
+                  <p>
+                    {showBalance ? (
+                      <span className="mr-4">{wallet.balance.DJED}</span>
+                    ) : (
+                      <span className="inline-block w-32 h-4 bg-gray-300 rounded-md blur-sm mr-4" />
+                    )}
+                    DJED
+                  </p>
+                </div>
+                <div className="flex flex-row justify-between items-center gap-6 w-full font-bold">
+                  <span className="rounded-full w-10 h-10 overflow-hidden">
+                    <img src="/shen-logo.png" alt="Shen logo" />
+                  </span>
+                  <p>
+                    {showBalance ? (
+                      <span className="mr-4">{wallet.balance.SHEN}</span>
+                    ) : (
+                      <span className="inline-block w-32 h-4 bg-gray-300 rounded-md blur-sm mr-4" />
+                    )}
+                    SHEN
+                  </p>
+                </div>
+              </div>
             </div>
-          ))}
-        </div>
-      </Modal>
+          </div>
+        ) : (
+          <div className="flex flex-col justify-start h-full px-4 py-4">
+            <div>
+              {wallets.length === 0 ? (
+                <p className="font-semibold text-red-500">No wallets detected.</p>
+              ) : (
+                <p className="text-xl py-4 pl-5 font-semibold">Choose your wallet:</p>
+              )}
+            </div>
+            {wallets
+              .filter(({ id }) => SUPPORTED_WALLET_IDS.includes(id))
+              .sort((a, b) => SUPPORTED_WALLET_IDS.indexOf(a.id) - SUPPORTED_WALLET_IDS.indexOf(b.id))
+              .map(({ id, name, icon }) => (
+                <div
+                  className="flex flex-row gap-2 items-center justify-between p-4 rounded-lg hover:bg-primary hover:text-white pr-6"
+                  key={id}
+                  onClick={() => {
+                    connect(id)
+                  }}
+                >
+                  <div className="flex flex-row justify-start items-center">
+                    <img src={icon} alt={`${name} icon`} className="w-12 h-12 mr-3" />
+                    <span className="text-lg">{name.replace(/^\w/, (c) => c.toUpperCase())}</span>
+                  </div>
+                  <i className="fa-solid fa-chevron-right"></i>
+                </div>
+              ))}
+          </div>
+        )}
+      </Sidebar>
     </>
   )
 }

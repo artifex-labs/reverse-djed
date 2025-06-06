@@ -27,7 +27,7 @@ const formatValue = (value: Value) => {
   if (filteredValue.length === 0) return `0 ADA`
   return filteredValue
     .sort((a, b) => VALUE_KEYS.indexOf(a[0]) - VALUE_KEYS.indexOf(b[0]))
-    .map(([k, v]) => `${formatNumber(v.toFixed(4))} ${k}`)
+    .map(([k, v]) => `${formatNumber(v, { maximumFractionDigits: 4 })} ${k}`)
     .join(' ')
 }
 
@@ -59,7 +59,7 @@ export const Action = ({ action, token, onActionStart, onActionComplete }: Actio
     try {
       const utxos = await wallet.utxos()
       if (!utxos) throw new Error('No UTXOs found')
-      const address = await wallet.address()
+      const address = await wallet.getChangeAddress()
 
       const response = await client.api[':token'][':action'][':amount']['tx'].$post({
         param: { token, action, amount: amount.toString() },
@@ -182,14 +182,16 @@ export const Action = ({ action, token, onActionStart, onActionComplete }: Actio
             {isPending ? (
               <LoadingCircle />
             ) : actionData ? (
-              formatNumber(actionData?.operatorFee.toFixed(4))
+              formatNumber(actionData?.operatorFee, { maximumFractionDigits: 4 })
             ) : (
               '-'
             )}{' '}
             ADA
           </p>
         </div>
-        <hr className="my-2 w-100 self-center border-gray-600" />
+        <div className="my-2 w-full px-10">
+          <hr className="light-action-line dark:border-dark-action-line" />
+        </div>
         <div className="flex justify-between">
           <div className="flex flex-row space-x-4">
             <p className="font-medium">Total cost</p>
@@ -198,7 +200,10 @@ export const Action = ({ action, token, onActionStart, onActionComplete }: Actio
                 <div className="bg-white dark:bg-black rounded-lg p-2 opacity-95">
                   The sum of the base cost{actionData ? ` (${formatValue(actionData?.baseCost)})` : ''},
                   action fee{actionData ? ` (${formatValue(actionData?.actionFee)})` : ''} and operator fee
-                  {actionData ? ` (${formatNumber(actionData.operatorFee.toFixed(4))} ADA)` : ''}.
+                  {actionData
+                    ? ` (${formatNumber(actionData.operatorFee, { maximumFractionDigits: 4 })} ADA)`
+                    : ''}
+                  .
                 </div>
               </div>
               <i className="fa-solid fa-circle-info pt-1"></i>
@@ -225,7 +230,9 @@ export const Action = ({ action, token, onActionStart, onActionComplete }: Actio
             {isPending ? <LoadingCircle /> : protocolData?.refundableDeposit} ADA
           </p>
         </div>
-        <hr className="my-2 w-100 self-center border-gray-600" />
+        <div className="my-2 w-full px-10">
+          <hr className="light-action-line dark:border-dark-action-line" />
+        </div>
         <div className="flex justify-between">
           <div className="flex flex-row space-x-4">
             <p className="font-medium">You will send</p>

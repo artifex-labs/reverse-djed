@@ -1,5 +1,6 @@
 import { useCallback } from 'react'
-import { formatNumber } from '~/utils'
+import { useLocalStorage } from 'usehooks-ts'
+import { DEFAULT_SHOW_BALANCE, formatNumber } from '~/utils'
 
 type AmountInputProps = {
   value: number
@@ -23,6 +24,8 @@ export const AmountInput = ({
   disabled = false,
   unit = 'ADA',
 }: AmountInputProps) => {
+  const showActionBalance = useLocalStorage<boolean | null>('showBalance', DEFAULT_SHOW_BALANCE)
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value
     const parsed = parseFloat(raw)
@@ -101,8 +104,14 @@ export const AmountInput = ({
             Max
           </button>
         </div>
-        <div>
-          Maximum: {formatNumber(roundToDecimals(max))} {unit}
+        <div className="flex flex-row justify-center items-center gap-2">
+          Maximum:
+          {showActionBalance ? (
+            <span>{formatNumber(roundToDecimals(max))}</span>
+          ) : (
+            <span className="inline-block w-20 h-1 dark:bg-gray-300 bg-gray-500 rounded-md blur-sm" />
+          )}
+          {unit}
         </div>
       </div>
     </div>
